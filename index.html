@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aktienrechner</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--panel:#fff;--ink:#14213d;--muted:#5b6678;--line:#d5dbe5;--accent:#2a4dd0;--gain:#12804a;--loss:#c0392b;--field:#f6f8fb;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1623;--panel:#172033;--ink:#e8edf7;--muted:#93a0b8;--line:#2a3752;--accent:#7c9bff;--gain:#4cc38a;--loss:#ff7b6b;--field:#0f1829;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1623;--panel:#172033;--ink:#e8edf7;--muted:#93a0b8;--line:#2a3752;--accent:#7c9bff;--gain:#4cc38a;--loss:#ff7b6b;--field:#0f1829;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:940px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:1.7rem;line-height:1.2;margin:0 0 4px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:0 0 22px;color:var(--muted)}
+.grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:780px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:start}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+h2{font-size:1.05rem;margin:0 0 14px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.f{position:relative;margin-top:4px}
+input{width:100%;font:inherit;font-weight:500;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 38px 10px 12px;font-variant-numeric:tabular-nums}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.u{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.hero{padding-bottom:16px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.hero small{color:var(--muted)}
+.big{font-size:2.4rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pos{color:var(--gain)}.neg{color:var(--loss)}
+dl{margin:0}
+.line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.line:last-child{border-bottom:0}
+dt{color:var(--muted)}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.target{margin-top:18px}
+.note{font-size:.84rem;color:var(--muted);margin:14px 0 0}
+select{width:100%;font:inherit;font-weight:500;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ft{margin-top:44px}
+#ch{width:100%;height:auto;display:block}
+#ch text{fill:var(--muted);font-size:11px;font-family:inherit}
+#ch .gl{stroke:var(--line);stroke-width:1}
+#ch .bd{fill:var(--accent);opacity:.18}
+#ch .md{fill:none;stroke:var(--accent);stroke-width:2.5}
+#ch .pd{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.84rem;color:var(--muted);margin:8px 0 12px}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.rg{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.rc h3{margin:0 0 6px;font-size:1rem;font-weight:600}
+.rp{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.rp span{font-size:.95rem;margin-left:8px}
+.rc ul{margin:10px 0 8px;padding-left:18px;font-size:.88rem}
+.rc li{margin-bottom:4px}
+.rc a{color:var(--accent)}
+.rc small{color:var(--muted);display:block}
+</style>
+</head>
+<body>
+<main class="wrap">
+<h1>Aktienrechner</h1>
+<p class="sub">Gewinn, Steuer und Rendite eines Aktiengeschäfts – nach Gebühren.</p>
+<div class="grid">
+  <section class="panel" aria-label="Eingaben">
+    <h2>Dein Geschäft</h2>
+    <div class="row2">
+      <label>Stückzahl<div class="f"><input id="qty" type="number" min="0" step="any" value="50" inputmode="decimal"><span class="u">Stk.</span></div></label>
+      <label>Steuersatz auf Gewinn<div class="f"><input id="tax" type="number" min="0" max="100" step="any" value="26.375" inputmode="decimal"><span class="u">%</span></div></label>
+      <label>Kaufkurs<div class="f"><input id="buy" type="number" min="0" step="any" value="42.80" inputmode="decimal"><span class="u">€</span></div></label>
+      <label>Verkaufskurs<div class="f"><input id="sell" type="number" min="0" step="any" value="51.35" inputmode="decimal"><span class="u">€</span></div></label>
+      <label>Gebühr beim Kauf<div class="f"><input id="fb" type="number" min="0" step="any" value="4.90" inputmode="decimal"><span class="u">€</span></div></label>
+      <label>Gebühr beim Verkauf<div class="f"><input id="fs" type="number" min="0" step="any" value="4.90" inputmode="decimal"><span class="u">€</span></div></label>
+    </div>
+    <div class="target">
+      <h2>Zielkurs berechnen</h2>
+      <label>Gewünschte Rendite nach Steuer<div class="f"><input id="goal" type="number" step="any" value="10" inputmode="decimal"><span class="u">%</span></div></label>
+      <dl>
+        <div class="line"><dt>Dafür nötiger Verkaufskurs</dt><dd id="tp">–</dd></div>
+        <div class="line"><dt>Veränderung zum Kaufkurs</dt><dd id="tc">–</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Ergebnis" aria-live="polite">
+    <div class="hero">
+      <small>Ergebnis nach Steuer</small>
+      <div class="big" id="net">–</div>
+      <div id="ret">–</div>
+    </div>
+    <dl>
+      <div class="line"><dt>Kaufwert</dt><dd id="kw">–</dd></div>
+      <div class="line"><dt>Verkaufserlös</dt><dd id="ve">–</dd></div>
+      <div class="line"><dt>Gebühren gesamt</dt><dd id="fees">–</dd></div>
+      <div class="line"><dt>Ergebnis vor Steuer</dt><dd id="pre">–</dd></div>
+      <div class="line"><dt>Steuer</dt><dd id="tx">–</dd></div>
+      <div class="line"><dt>Eingesetztes Kapital</dt><dd id="inv">–</dd></div>
+      <div class="line"><dt>Break-even-Kurs (vor Steuer)</dt><dd id="be">–</dd></div>
+    </dl>
+    <p class="note">Voreingestellt sind 26,375 % (Abgeltungsteuer mit Solidaritätszuschlag, ohne Kirchensteuer und Freistellungsauftrag). Steuer fällt nur bei Gewinn an. Das ist eine Rechenhilfe, keine Steuerberatung.</p>
+  </section>
+</div>
+<section class="ft" aria-label="Langzeit-Prognose">
+<h1>Langzeit-Prognose</h1>
+<p class="sub">Wähle eine Aktie und sieh, wie sich dein Geld über die Jahre entwickeln könnte.</p>
+<div class="grid">
+  <div class="panel">
+    <h2>Annahmen</h2>
+    <label>Aktie<div class="f"><select id="st"></select></div></label>
+    <div class="row2">
+      <label>Einstiegskapital<div class="f"><input id="f0" type="number" min="0" step="any" value="5000" inputmode="decimal"><span class="u">€</span></div></label>
+      <label>Sparrate pro Monat<div class="f"><input id="fm" type="number" min="0" step="any" value="200" inputmode="decimal"><span class="u">€</span></div></label>
+      <label>Laufzeit<div class="f"><input id="fy" type="number" min="1" max="50" step="1" value="20" inputmode="numeric"><span class="u">Jahre</span></div></label>
+      <label>Inflation p. a.<div class="f"><input id="fi" type="number" min="0" step="any" value="2" inputmode="decimal"><span class="u">%</span></div></label>
+      <label>Rendite p. a.<div class="f"><input id="fr" type="number" step="any" value="10" inputmode="decimal"><span class="u">%</span></div></label>
+      <label>Schwankung p. a.<div class="f"><input id="fv" type="number" min="0" step="any" value="28" inputmode="decimal"><span class="u">%</span></div></label>
+    </div>
+    <p class="note">Die Werte zur Aktie sind grobe, selbst gewählte Annahmen – keine Kursdaten und keine Prognose von Analysten. Du kannst Rendite und Schwankung jederzeit ändern. Die Steuer übernimmt den Satz von oben.</p>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2 id="fh">Entwicklung</h2>
+    <svg id="ch" viewBox="0 0 560 300" role="img" aria-label="Diagramm der möglichen Vermögensentwicklung"></svg>
+    <div class="lg"><span><i style="background:var(--accent)"></i>Erwartet (Median)</span><span><i style="background:var(--accent);opacity:.3"></i>Bandbreite 10–90 %</span><span><i style="background:var(--muted)"></i>Eingezahlt</span></div>
+    <dl>
+      <div class="line"><dt>Eingezahlt</dt><dd id="rp">–</dd></div>
+      <div class="line"><dt>Pessimistisch (10 %)</dt><dd id="r1">–</dd></div>
+      <div class="line"><dt>Erwartet (Median)</dt><dd id="r5">–</dd></div>
+      <div class="line"><dt>Optimistisch (90 %)</dt><dd id="r9">–</dd></div>
+      <div class="line"><dt>Gewinn vor Steuer (Median)</dt><dd id="g5">0</dd></div>
+      <div class="line"><dt>Gewinn nach Steuer (Median)</dt><dd id="gn">0</dd></div>
+      <div class="line"><dt>Gewinn nach Steuer, 10–90 %</dt><dd id="gs">0</dd></div>
+      <div class="line"><dt>Erwartet nach Steuer</dt><dd id="rn">–</dd></div>
+      <div class="line"><dt>Nach Steuer, kaufkraftbereinigt</dt><dd id="rr">–</dd></div>
+    </dl>
+    <p class="note">400 simulierte Verläufe mit zufälligen Monatsschwankungen. „Pessimistisch“ heißt: In 1 von 10 Fällen läuft es schlechter. Verluste über den Einsatz hinaus sind ausgeschlossen, Währungseffekte und Dividenden nicht berücksichtigt.</p>
+  </div>
+</div>
+</section>
+<section class="ft" aria-label="Markt-Radar">
+<h1>Markt-Radar</h1>
+<p class="sub" id="rds">Lade Kursdaten …</p>
+<div class="rg" id="rdl"></div>
+<p class="note">Kurse von Yahoo Finance (ca. 15 Minuten verzögert), Schlagzeilen von Google News. Alle 5 Minuten wird automatisch neu geladen. Keine Anlageberatung.</p>
+</section>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var eur=new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"});
+var pc=new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2,signDisplay:"exceptZero"});
+var n=function(i){var v=parseFloat($(i).value);return isFinite(v)?v:0};
+function set(id,txt,cls){var e=$(id);e.textContent=txt;if(cls!==undefined)e.className=cls?(e.className.split(" ")[0]&&e.dataset.base?e.dataset.base+" ":"")+cls:(e.dataset.base||"")}
+function sign(v){return v>0?"pos":v<0?"neg":""}
+function calc(){
+  var q=n("qty"),b=n("buy"),s=n("sell"),fb=n("fb"),fs=n("fs"),t=Math.min(n("tax"),99.99)/100;
+  var kw=q*b,ve=q*s,fees=fb+fs,pre=ve-kw-fees,tax=pre>0?pre*t:0,net=pre-tax,inv=kw+fb;
+  var ok=q>0&&b>0;
+  set("kw",eur.format(kw));set("ve",eur.format(ve));set("fees",eur.format(fees));
+  set("pre",eur.format(pre));set("tx",eur.format(tax));set("inv",eur.format(inv));
+  set("be",q>0?eur.format((kw+fees)/q):"–");
+  var nb=$("net");nb.textContent=eur.format(net);nb.className="big "+sign(net);
+  var r=$("ret");
+  if(ok){var rp=net/inv*100;r.textContent=pc.format(rp)+" % Rendite auf das eingesetzte Kapital";r.className=sign(rp)}
+  else{r.textContent="Bitte Stückzahl und Kaufkurs eingeben.";r.className=""}
+  var g=n("goal")/100;
+  if(ok){
+    var need=g>=0?g*inv/(1-t):g*inv;
+    var sp=(need+kw+fb+fs)/q;
+    $("tp").textContent=eur.format(sp);
+    var ch=(sp/b-1)*100;
+    $("tc").textContent=pc.format(ch)+" %";
+  }else{$("tp").textContent="–";$("tc").textContent="–"}
+}
+Array.prototype.forEach.call(document.querySelectorAll("input"),function(i){i.addEventListener("input",calc)});
+calc();
+var ST=[["Apple",10,28],["Microsoft",11,26],["NVIDIA",14,50],["Amazon",11,32],["Alphabet",10,27],["Tesla",10,55],["SAP",8,26],["Siemens",7,25],["Allianz",7,22],["Coca-Cola",6,16],["MSCI-World-ETF",7,15],["Eigene Annahme",7,20]];
+var sel=$("st"),e0=new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",maximumFractionDigits:0}),cp=new Intl.NumberFormat("de-DE",{notation:"compact",maximumFractionDigits:1});
+ST.forEach(function(s,i){var o=document.createElement("option");o.value=i;o.textContent=s[0];sel.appendChild(o)});
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){var u=1-r(),v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function pick(a,p){return a[Math.floor(p*(a.length-1))]}
+function fc(){
+  var s0=n("f0"),pm=n("fm"),Y=Math.max(1,Math.min(50,Math.round(n("fy")))),mu=Math.max(n("fr")/100,-0.99),sg=n("fv")/100,inf=n("fi")/100,t=Math.min(n("tax"),99.99)/100;
+  var N=400,r=rng(12345),dr=(Math.log(1+mu)-sg*sg/2)/12,vo=sg/Math.sqrt(12),yr=[],y,i,m,v;
+  for(y=0;y<=Y;y++)yr.push([]);
+  for(i=0;i<N;i++){v=s0;yr[0].push(v);for(m=1;m<=Y*12;m++){v=(v+pm)*Math.exp(dr+vo*gauss(r));if(m%12===0)yr[m/12].push(v)}}
+  var p1=[],p5=[],p9=[],pd=[];
+  for(y=0;y<=Y;y++){yr[y].sort(function(a,b){return a-b});p1.push(pick(yr[y],.1));p5.push(pick(yr[y],.5));p9.push(pick(yr[y],.9));pd.push(s0+pm*12*y)}
+  var W=560,H=300,L=58,R=12,T=12,B=28,ym=Math.max(p9[Y],pd[Y],1)*1.05;
+  var X=function(k){return L+(W-L-R)*k/Y},Yp=function(val){return H-B-(H-T-B)*val/ym};
+  var g="",k;
+  for(k=0;k<=4;k++){var gv=ym*k/4,gy=Yp(gv);g+='<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'"/><text x="'+(L-6)+'" y="'+(gy+4)+'" text-anchor="end">'+cp.format(gv)+'</text>'}
+  var steps=Math.min(5,Y);
+  for(k=0;k<=steps;k++){var yy=Math.round(Y*k/steps);g+='<text x="'+X(yy)+'" y="'+(H-8)+'" text-anchor="middle">'+yy+' J.</text>'}
+  var line=function(a){return a.map(function(val,j){return (j?"L":"M")+X(j).toFixed(1)+" "+Yp(val).toFixed(1)}).join("")};
+  var up=p9.map(function(val,j){return (j?"L":"M")+X(j).toFixed(1)+" "+Yp(val).toFixed(1)}).join("");
+  var dn=p1.map(function(val,j){return "L"+X(j).toFixed(1)+" "+Yp(val).toFixed(1)}).reverse().join("");
+  g+='<path class="bd" d="'+up+dn+'Z"/><path class="pd" d="'+line(pd)+'"/><path class="md" d="'+line(p5)+'"/>';
+  $("ch").innerHTML=g;
+  $("fh").textContent=ST[sel.value][0]+" in "+Y+" Jahren";
+  var paid=pd[Y],med=p5[Y],gain=med-paid,net=med-(gain>0?gain*t:0);
+  $("rp").textContent=e0.format(paid);$("r1").textContent=e0.format(p1[Y]);$("r5").textContent=e0.format(med);$("r9").textContent=e0.format(p9[Y]);
+  $("rn").textContent=e0.format(net);
+  var tx=function(val){var gg=val-paid;return gg-(gg>0?gg*t:0)};
+  $("g5").textContent=e0.format(gain);$("gn").textContent=e0.format(tx(med));$("gs").textContent=e0.format(tx(p1[Y]))+" bis "+e0.format(tx(p9[Y]));$("rr").textContent=e0.format(net/Math.pow(1+inf,Y));
+}
+function pickStock(){var s=ST[sel.value];$("fr").value=s[1];$("fv").value=s[2];fc()}
+sel.addEventListener("change",pickStock);
+["f0","fm","fy","fr","fv","fi","tax"].forEach(function(id){$(id).addEventListener("input",fc)});
+pickStock();
+var rd=$("rdl"),rs=$("rds");
+function mk(tag,txt,cls){var e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
+function okUrl(u){return typeof u==="string"&&u.indexOf("https://")===0}
+function rcards(docs){
+  rd.textContent="";
+  if(!docs.length){rs.textContent="Noch keine Kursdaten verf\u00fcgbar.";return}
+  var latest="";
+  docs.forEach(function(d){
+    var x=d.data()||{},c=mk("article",undefined,"rc");
+    c.appendChild(mk("h3",(x.name||d.id)+(x.ticker?" ("+x.ticker+")":"")));
+    var p=mk("div",undefined,"rp"),pr="\u2013";
+    if(typeof x.price==="number"){try{pr=new Intl.NumberFormat("de-DE",{style:"currency",currency:x.currency||"EUR"}).format(x.price)}catch(e){pr=x.price+" "+(x.currency||"")}}
+    p.appendChild(document.createTextNode(pr));
+    if(typeof x.changePct==="number")p.appendChild(mk("span",pc.format(x.changePct)+" %",sign(x.changePct)));
+    c.appendChild(p);
+    if(x.asOf){c.appendChild(mk("small","Stand: "+x.asOf));if(String(x.asOf)>latest)latest=String(x.asOf)}
+    if(Array.isArray(x.news)&&x.news.length){
+      var ul=mk("ul");
+      x.news.slice(0,3).forEach(function(nw){
+        var li=mk("li");
+        if(okUrl(nw.url)){var a=mk("a",nw.title||nw.url);a.href=nw.url;a.target="_blank";a.rel="noopener noreferrer";li.appendChild(a)}else li.textContent=nw.title||"";
+        if(nw.source)li.appendChild(document.createTextNode(" ("+nw.source+")"));
+        ul.appendChild(li)});
+      c.appendChild(ul)}
+    if(okUrl(x.live)){var l=mk("a","Live ansehen");l.href=x.live;l.target="_blank";l.rel="noopener noreferrer";c.appendChild(l)}
+    rd.appendChild(c)});
+  rs.textContent="Zuletzt aktualisiert: "+(latest||"unbekannt")
+}
+function load(){fetch("/api/radar").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+  rcards(j.items.map(function(x){return {id:x.id,data:function(){return x}}}));
+  rs.textContent="Zuletzt abgefragt: "+new Date(j.updatedAt).toLocaleString("de-DE")+" \u2013 aktualisiert sich alle 5 Minuten selbst"
+}).catch(function(){rs.textContent="Kursdaten konnten nicht geladen werden. Neuer Versuch in 5 Minuten."})}
+load();setInterval(load,300000);
+})();
+</script>
+</body>
+</html>
